@@ -1,4 +1,5 @@
-setuptools
 pandas
+openpyxl
+dash
+dash-bootstrap-components
 pytest
-bcrypt
