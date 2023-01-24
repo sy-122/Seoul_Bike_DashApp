@@ -205,7 +205,7 @@ df = df.drop(['Func_Day'], axis=1)
 
 
 # Save the prepared data to CSV
-# df.to_csv('C:/Users/sbak0/Downloads/data_prepared.csv')
+# df.to_csv('C:/Users/sbak0/Downloads/Bike_data_adjusted.csv')
 
 
 # In[5]:
