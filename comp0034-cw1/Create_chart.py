@@ -1,70 +1,137 @@
-import plotly.graph_objects as go
+from pathlib import Path
+import pandas as pd
+from dash import Dash, html, dcc
+import dash_bootstrap_components as dbc
 import plotly.express as px
+from dash.dependencies import Input, Output
+
+# Import Data
+BIKE_DATA_FILEPATH = Path(__file__).parent.joinpath('data', 'Bike_data_adjusted.csv')
+df_bike = pd.read_csv(BIKE_DATA_FILEPATH, encoding='unicode_escape')
+
+# ------------------------#
+# Create Graphs
+# ------------------------#
+# Bar graph for Month vs Bicycle Rented
+month_bar_graph = px.bar(
+    data_frame=df_bike.groupby('Month').mean('Count').reset_index(),
+    x='Month',
+    y="Count",
+    labels={'Month': 'Month', 'Count': 'Average Bike Used'},
+    template="simple_white",
+)
 
 
-class BarChart:
-    """ Creates the bar chart to be used in the dashboard"""
+# Line plot for Hour VS Bicycle Rented
+hour_line_plot = px.line(data_frame=df_bike.groupby('Hour').mean('Count').reset_index(),
+                         x='Hour',
+                         y='Count',
+                         markers=True,
+                         labels={'Hour': 'Time', 'Count': 'Average Bike Used'},
+                         )
 
-    def __init__(self, data):
-        self.data = data
-
-    def create_chart(self, area):
-        area_data = self.data.recycling_area
-        eng_data = self.data.recycling_eng
-        area = go.Scatter(x=area_data['Year'], y=area_data['Recycling_Rates'],
-                          mode='lines',
-                          name=area,
-                          line=dict(color='firebrick', width=4))
-        eng = go.Scatter(x=eng_data['Year'], y=eng_data['Recycling_Rates'], mode='lines',
-                         name='England',
-                         line=dict(color='lightgrey', dash='dash'))
-
-        # Create the layout
-        layout = go.Layout(showlegend=True, plot_bgcolor="#ffffff")
-
-        # Create the figure
-        figure = go.Figure(layout=layout)
-
-        # Update the figure and add the traces
-        figure.add_trace(area)
-        figure.add_trace(eng)
-
-        # Update the layout of the axes to look a little closer to the original chart we are copyin
-        figure.update_layout(yaxis_title="Percent")
-        figure.update_yaxes(title_font=dict(size=14, color='#CDCDCD'),
-                            tickfont=dict(color='#CDCDCD', size=12), ticksuffix="%",
-                            showgrid=True, gridwidth=1, gridcolor='#CDCDCD',
-                            tick0=0.0, dtick=10.0)
-        figure.update_xaxes(tickangle=90, tickfont=dict(color='#CDCDCD', size=12),
-                            showline=True, linewidth=2, linecolor='#CDCDCD')
-
-        return figure
-
-
-class RecyclingBarChart:
-    """ Creates the recycling bar chart to be used in the dashboard
-    TODO: format the chart, add titles etc
-    """
-    def __init__(self, data):
-        self.data = data
-
-    def create_chart(self, period):
-        data = self.data.recycling
-        data = data.loc[data['Year'] == period]
-        data = data.sort_values('Recycling_Rates', ascending=False)
-        title_text = f'Recycling by area in {period}'
-        fig = px.bar(data, x='Area', y='Recycling_Rates', title=title_text)
-        return fig
-
-#
-def bar_graph(time_variable):
-    fig = px.bar(
-        data_frame=df_bike.groupby([time_variable]).mean('Count').reset_index(),
-        x=time_variable,
-        y="Count",
-        labels={'x': time_variable, 'Count': 'Average Bike Used'},
-        template="simple_white"
-    )
-    fig.update_layout(title_text=time_variable + ' VS Average Rented Bike',
-                      title_x=0.5)
+def hour_line_plot():
+    df_hour_avg = df_bike.groupby('Hour').mean('Count').reset_index(),
+    df_day = df_hour_avg.loc[df_hour_avg['DayofWeek'] == 'Sunday']
+    fig = px.line(df_day, x='Hour', y='Count', markers=True,
+                  labels={'Hour': 'Time', 'Count': 'Average Bike Used'},
+                  )
     return fig
+
+# Heatmap
+
+
+# ------------------------#
+# Create App
+# ------------------------#
+# Create the Dash app using Bootstrap
+app = Dash(
+    external_stylesheets=[dbc.themes.LUX],
+    meta_tags=[
+        {"name": "viewport", "content": "width=device-width, initial-scale=1"},
+    ],
+)
+
+# Create navigation bar
+navbar = dbc.NavbarSimple(
+    children=[
+        dbc.DropdownMenu(
+            children=[
+                dbc.DropdownMenuItem("Home", href="/", active="exact"),
+                dbc.DropdownMenuItem("Comments", href="/comments", active="exact")
+            ],
+            nav=True,
+            in_navbar=True,
+            label="Menu",
+        ),
+    ],
+    brand="Seoul Bicycle",
+    brand_href="#",
+    color="Green",
+    dark=True,
+)
+
+# Create the app layout using Bootstrap fluid container
+app.layout = dbc.Container(
+    children=[
+        navbar,
+        html.H1(children='Welcome to Seoul Public Bicycle Website!',
+                className="text-center p-4"),
+        html.P(children='Learn about the different variables that affect the usage of bike.',
+               className="text-center p-2"),
+        html.Br(),
+
+        dcc.Tabs(id="tabs-graph", value='tab-content-graph', children=[
+            dcc.Tab(label='Time & Month', value='time_related'),
+            dcc.Tab(label='Other Variables', value='heatmap'),
+        ]),
+        html.Div(id='tabs-content-graph')
+
+    ],
+    fluid=True
+)
+
+
+# Callback for Tab
+@app.callback(Output('tabs-content-graph', 'children'),
+              Input('tabs-graph', 'value'))
+def render_content(tab):
+    if tab == 'time_related':
+        return html.Div([
+            dbc.Row([
+                html.H4('Average Bike rented per hour'),
+                dbc.Col([
+                    html.Label(['Choose variables:'],
+                               style={'font-weight': 'bold', "text-align": "center"}),
+                    dcc.Dropdown(id='line-dropdown',
+                                 options=['Sunday', 'Monday', 'Tuesday', 'Wednesday',
+                                          'Thursaday', 'Friday', 'Saturday'],
+                                 placeholder='Please select ...')], width=3
+                ),
+                dbc.Col(
+                    dcc.Graph(
+                        id='line-plot',
+                        figure=hour_line_plot
+                    )
+                )
+            ]),
+            dbc.Row([
+                html.Br(),
+                html.H4('Average Bike rented each Month'),
+                dcc.Graph(id='month_bar', figure=month_bar_graph)
+            ])
+        ])
+    elif tab == 'heatmap':
+        return html.Div([html.H4('Live adjustable subplot-width'), ])
+
+
+# Connecting the Dropdown values to the line-graph
+@app.callback(Output("hour-line", "figure"),
+              Input("line-dropdown", "value"))
+def update_line_chart(weekday):
+    fig_r = hour_line_plot(weekday)
+    return fig_r
+
+
+if __name__ == '__main__':
+    app.run_server(debug=True)
