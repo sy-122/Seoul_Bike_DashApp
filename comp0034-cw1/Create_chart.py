@@ -5,52 +5,50 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 from dash.dependencies import Input, Output
 
-# Import Data
-BIKE_DATA_FILEPATH = Path(__file__).parent.joinpath('data', 'Bike_data_adjusted.csv')
-df_bike = pd.read_csv(BIKE_DATA_FILEPATH, encoding='unicode_escape')
 
 # ------------------------#
 # Create Graphs
 # ------------------------#
+# Import Data
+BIKE_DATA_FILEPATH = Path(__file__).parent.joinpath('data', 'Bike_data_adjusted.csv')
+df_bike = pd.read_csv(BIKE_DATA_FILEPATH, encoding='unicode_escape')
+
 # Bar graph for Month vs Bicycle Rented
 month_bar_graph = px.bar(
     data_frame=df_bike.groupby('Month').mean('Count').reset_index(),
     x='Month',
     y="Count",
     labels={'Month': 'Month', 'Count': 'Average Bike Used'},
-    template="simple_white",
+    template="simple_white"
 )
 
-
 # Line plot for Hour VS Bicycle Rented
-hour_line_plot = px.line(data_frame=df_bike.groupby('Hour').mean('Count').reset_index(),
-                         x='Hour',
-                         y='Count',
-                         markers=True,
-                         labels={'Hour': 'Time', 'Count': 'Average Bike Used'},
-                         )
+hour_line_plot1 = px.line(
+    data_frame=df_bike.groupby(['DayofWeek','Hour']).mean('Count').reset_index(),
+    x='Hour', y='Count', color='DayofWeek', markers=True,
+    labels={'Hour': 'Time', 'Count': 'Average Bike Used'},
+    template="simple_white"
+)
 
-def hour_line_plot():
-    df_hour_avg = df_bike.groupby('Hour').mean('Count').reset_index(),
-    df_day = df_hour_avg.loc[df_hour_avg['DayofWeek'] == 'Sunday']
-    fig = px.line(df_day, x='Hour', y='Count', markers=True,
-                  labels={'Hour': 'Time', 'Count': 'Average Bike Used'},
-                  )
+# Scatter Plot
+def scatter_plot(x_var):
+    fig = px.scatter(
+        data_frame=df_bike,
+        x=x_var,
+        y="Count",
+        trendline='ols',
+        trendline_color_override="red",
+        opacity=0.3,
+        labels={'x': x_var, 'Count': 'Bike Rented'},
+        template="simple_white"
+)
     return fig
-
-# Heatmap
-
 
 # ------------------------#
 # Create App
 # ------------------------#
 # Create the Dash app using Bootstrap
-app = Dash(
-    external_stylesheets=[dbc.themes.LUX],
-    meta_tags=[
-        {"name": "viewport", "content": "width=device-width, initial-scale=1"},
-    ],
-)
+app = Dash(__name__, suppress_callback_exceptions=True)
 
 # Create navigation bar
 navbar = dbc.NavbarSimple(
@@ -67,8 +65,6 @@ navbar = dbc.NavbarSimple(
     ],
     brand="Seoul Bicycle",
     brand_href="#",
-    color="Green",
-    dark=True,
 )
 
 # Create the app layout using Bootstrap fluid container
@@ -76,14 +72,13 @@ app.layout = dbc.Container(
     children=[
         navbar,
         html.H1(children='Welcome to Seoul Public Bicycle Website!',
-                className="text-center p-4"),
+                className = "text-center p-4"),
         html.P(children='Learn about the different variables that affect the usage of bike.',
-               className="text-center p-2"),
+                className = "text-center p-2"),
         html.Br(),
-
-        dcc.Tabs(id="tabs-graph", value='tab-content-graph', children=[
-            dcc.Tab(label='Time & Month', value='time_related'),
-            dcc.Tab(label='Other Variables', value='heatmap'),
+        dcc.Tabs(id="nav-tabs", value='tab-content-graph', children=[
+            dcc.Tab(label='Time & Month', value='time-related'),
+            dcc.Tab(label='Other Variables', value='others'),
         ]),
         html.Div(id='tabs-content-graph')
 
@@ -91,47 +86,56 @@ app.layout = dbc.Container(
     fluid=True
 )
 
-
 # Callback for Tab
 @app.callback(Output('tabs-content-graph', 'children'),
-              Input('tabs-graph', 'value'))
+              Input('tabs-graph', 'value'),
+              prevent_initial_call=True)
 def render_content(tab):
-    if tab == 'time_related':
+    if tab == 'time-related':
         return html.Div([
             dbc.Row([
-                html.H4('Average Bike rented per hour'),
-                dbc.Col([
-                    html.Label(['Choose variables:'],
-                               style={'font-weight': 'bold', "text-align": "center"}),
-                    dcc.Dropdown(id='line-dropdown',
-                                 options=['Sunday', 'Monday', 'Tuesday', 'Wednesday',
-                                          'Thursaday', 'Friday', 'Saturday'],
-                                 placeholder='Please select ...')], width=3
-                ),
-                dbc.Col(
-                    dcc.Graph(
-                        id='line-plot',
-                        figure=hour_line_plot
-                    )
-                )
+                html.H4('Average Bike rented each hour of the day'),
+                dcc.Graph(id='hour_line', figure=hour_line_plot1)
             ]),
             dbc.Row([
                 html.Br(),
                 html.H4('Average Bike rented each Month'),
                 dcc.Graph(id='month_bar', figure=month_bar_graph)
             ])
+        ]),
+    elif tab == 'others':
+        return html.Div([
+            dbc.Row([
+                html.Br(),
+                html.H4('How does other variables effect the number of bike rented'),
+                dbc.Col([
+                    html.Label(['Choose variables:'],
+                               style={'font-weight': 'bold', "text-align": "center"}),
+                    dcc.Dropdown(id='scatter-dropdown',
+                                 options=[
+                                     {'label': 'Humidity', 'value': 'Humidity'},
+                                     {'label': 'Wind Speed', 'value': 'Windspeed'},
+                                     {'label': 'Solar Radiation', 'value': 'Solar_Rad'},
+                                     {'label': 'Snow', 'value': 'Snowfall'},
+                                     {'label': 'Rain', 'value': 'Rainfall'},
+                                 ],
+                                 placeholder='Please select ...'),
+                    dcc.Graph(id='scatter-plot')
+                ]),
+            ]),
         ])
-    elif tab == 'heatmap':
-        return html.Div([html.H4('Live adjustable subplot-width'), ])
 
-
-# Connecting the Dropdown values to the line-graph
-@app.callback(Output("hour-line", "figure"),
-              Input("line-dropdown", "value"))
-def update_line_chart(weekday):
-    fig_r = hour_line_plot(weekday)
-    return fig_r
-
+@app.callback(Output("scatter-plot", "figure"),
+              Input("scatter-dropdown", "value"),
+              prevent_initial_call=True)
+def change_scatter_plot(x_variable):
+    fig_new = scatter_plot(x_variable)
+    fig_new.update_layout(title_text=str(x_variable) + ' VS Number of Bike Rented',
+                      title_x=0.5)
+    return fig_new
 
 if __name__ == '__main__':
     app.run_server(debug=True)
+
+
+#pip install statsmodels

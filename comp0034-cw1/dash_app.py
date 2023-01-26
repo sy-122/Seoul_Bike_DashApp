@@ -52,6 +52,7 @@ app = Dash(
     meta_tags=[
         {"name": "viewport", "content": "width=device-width, initial-scale=1"},
     ],
+
 )
 
 # Create navigation bar
@@ -69,8 +70,7 @@ navbar = dbc.NavbarSimple(
     ],
     brand="Seoul Bicycle",
     brand_href="#",
-    color="Green",
-    dark=True,
+    color="secondary",
 )
 
 # Create the app layout using Bootstrap fluid container
@@ -83,7 +83,7 @@ app.layout = dbc.Container(
                 className = "text-center p-2"),
         html.Br(),
 
-        dcc.Tabs(id="tabs-graph", value='tab-content-graph', children=[
+        dcc.Tabs(id="nav-tabs", value='tab-content-graph', children=[
             dcc.Tab(label='Time & Month', value='time-related'),
             dcc.Tab(label='Other Variables', value='others'),
         ]),
@@ -95,7 +95,7 @@ app.layout = dbc.Container(
 
 # Callback for Tab
 @app.callback(Output('tabs-content-graph', 'children'),
-              Input('tabs-graph', 'value'))
+              Input('nav-tabs', 'value'))
 def render_content(tab):
     if tab == 'time-related':
         return html.Div([
