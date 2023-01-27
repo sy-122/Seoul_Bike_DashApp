@@ -1,3 +1,10 @@
+.center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50%;
+}
+
 @charset "UTF-8";/*!
  * Bootswatch v5.2.3 (https://bootswatch.com)
  * Theme: minty
