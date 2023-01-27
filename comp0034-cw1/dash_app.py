@@ -5,13 +5,14 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 from dash.dependencies import Input, Output
 
-# Import Data
-BIKE_DATA_FILEPATH = Path(__file__).parent.joinpath('data', 'Bike_data_adjusted.csv')
-df_bike = pd.read_csv(BIKE_DATA_FILEPATH, encoding='unicode_escape')
 
 # ------------------------#
 # Create Graphs
 # ------------------------#
+# Import Data
+BIKE_DATA_FILEPATH = Path(__file__).parent.joinpath('data', 'Bike_data_adjusted.csv')
+df_bike = pd.read_csv(BIKE_DATA_FILEPATH, encoding='unicode_escape')
+
 # Bar graph for Month vs Bicycle Rented
 month_bar_graph = px.bar(
     data_frame=df_bike.groupby('Month').mean('Count').reset_index(),
@@ -24,12 +25,15 @@ month_bar_graph = px.bar(
 # Line plot for Hour VS Bicycle Rented
 hour_line_plot1 = px.line(
     data_frame=df_bike.groupby(['DayofWeek','Hour']).mean('Count').reset_index(),
-    x='Hour', y='Count', color='DayofWeek', markers=True,
+    x='Hour',
+    y='Count',
+    color='DayofWeek',
+    markers=True,
     labels={'Hour': 'Time', 'Count': 'Average Bike Used'},
     template="simple_white"
 )
 
-# Scatter Plot
+# Make Scatter Plot with Y-VAR as total number of bike rented
 def scatter_plot(x_var):
     fig = px.scatter(
         data_frame=df_bike,
@@ -47,12 +51,11 @@ def scatter_plot(x_var):
 # Create App
 # ------------------------#
 # Create the Dash app using Bootstrap
-app = Dash(
-    external_stylesheets=[dbc.themes.LUX],
-    meta_tags=[
-        {"name": "viewport", "content": "width=device-width, initial-scale=1"},
-    ],
-
+app = Dash(external_stylesheets=[dbc.themes.LUX],
+           meta_tags=[
+               {"name": "viewport", "content": "width=device-width, initial-scale=1"}
+           ],
+           suppress_callback_exceptions=True
 )
 
 # Create navigation bar
@@ -70,7 +73,8 @@ navbar = dbc.NavbarSimple(
     ],
     brand="Seoul Bicycle",
     brand_href="#",
-    color="secondary",
+    color='secondary',
+    className='nav-tab'
 )
 
 # Create the app layout using Bootstrap fluid container
@@ -78,9 +82,11 @@ app.layout = dbc.Container(
     children=[
         navbar,
         html.H1(children='Welcome to Seoul Public Bicycle Website!',
-                className = "text-center p-4"),
+                className="text-center p-4"),
+        html.Img(src=app.get_asset_url('seoul-bike.png'),
+                 className='center'),
         html.P(children='Learn about the different variables that affect the usage of bike.',
-                className = "text-center p-2"),
+               className="text-center p-2"),
         html.Br(),
 
         dcc.Tabs(id="nav-tabs", value='tab-content-graph', children=[
@@ -94,13 +100,14 @@ app.layout = dbc.Container(
 )
 
 # Callback for Tab
-@app.callback(Output('tabs-content-graph', 'children'),
-              Input('nav-tabs', 'value'))
+@app.callback(Output(component_id='tabs-content-graph', component_property='children'),
+              Input(component_id='nav-tabs', component_property='value'))
 def render_content(tab):
     if tab == 'time-related':
         return html.Div([
             dbc.Row([
                 html.H4('Average Bike rented each hour of the day'),
+                html.P('Double Click on legend to look at one DayofWeek'),
                 dcc.Graph(id='hour_line', figure=hour_line_plot1)
             ]),
             dbc.Row([
@@ -114,9 +121,6 @@ def render_content(tab):
             dbc.Row([
                 html.Br(),
                 html.H4('How does other variables effect the number of bike rented'),
-                #dbc.Col([
-                    #dcc.Graph(id='heatmap', figure=heatmap),
-                    #]),
                 dbc.Col([
                     html.Label(['Choose variables:'],
                                style={'font-weight': 'bold', "text-align": "center"}),
@@ -134,8 +138,8 @@ def render_content(tab):
             ]),
         ])
 
-@app.callback(Output("scatter-plot", "figure"),
-              Input("scatter-dropdown", "value"))
+@app.callback(Output(component_id="scatter-plot", component_property="figure"),
+              Input(component_id="scatter-dropdown", component_property="value"))
 def change_scatter_plot(x_variable):
     fig_new = scatter_plot(x_variable)
     fig_new.update_layout(title_text=str(x_variable) + ' VS Number of Bike Rented',
