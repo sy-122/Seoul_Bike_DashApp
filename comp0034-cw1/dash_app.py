@@ -29,14 +29,22 @@ hour_line_plot1 = px.line(
     template="simple_white"
 )
 
+# Dataframe needed for the bar graph
+bar_original_df = df_bike.groupby(['Month']).mean('Count').reset_index()
+Month_Holiday = df_bike.groupby(['Month'])['Holiday'].value_counts(
+    normalize=True).reset_index(name='Holiday%')
+Month_Holiday = Month_Holiday[Month_Holiday.Holiday == 'Holiday']
+Month_Holiday['Holiday%'] = Month_Holiday['Holiday%'].apply(lambda x: x * 100)
+Month_Holiday['Holiday%'] = Month_Holiday['Holiday%'].apply(lambda x: '{0:1.2f}%'.format(x))
+bar_new_df = pd.merge(bar_original_df, Month_Holiday, how='left', on='Month')
+
 # Bar graph for Month vs Bicycle Rented
-bar_orginal_df = df_bike.groupby(['Month']).mean('Count').reset_index()
-def month_bar_graph(df=bar_orginal_df, fill=None):
+def month_bar_graph(df=bar_original_df, bar_text=None):
     fig = px.bar(
         data_frame=df,
         x='Month',
         y="Count",
-        color=fill,
+        text=bar_text,
         labels={'Month': 'Month', 'Count': 'Average Bike Rented'},
         template="simple_white")
     return fig
@@ -124,12 +132,11 @@ def render_content(tab):
             dbc.Row((
                 html.Br(),
                 html.H4('Average Bike rented each Month'),
-                #dcc.Graph(id='month_bar', figure=month_bar_graph),
                 daq.BooleanSwitch(
                     id='boolean-switch',
                     on=False,
                     color='#78c2ad',
-                    label="Show Holiday"
+                    label="% of days that are Holiday"
                 ),
                 html.Div(
                     [dcc.Graph(id='bar')], id='boolean-switch-output')
@@ -147,20 +154,22 @@ def render_content(tab):
             ]),
         ])
 
+#Bar Graph Boolean Switch to show percent of days that are holiday
 @app.callback(
     Output(component_id='boolean-switch-output', component_property='children'),
     Input(component_id='boolean-switch', component_property='on')
 )
 def update_output(on):
     if on:
-        bar_new_df = df_bike.groupby(['Month', 'Holiday']).mean('Count').reset_index()
-        fig = month_bar_graph(bar_new_df, 'Holiday')
+        fig = month_bar_graph(bar_new_df, 'Holiday%')
+        fig = fig.update_traces(textposition='outside')
         dcc.Graph(figure=fig)
         return [dcc.Graph(figure=fig)]
     else:
         fig = month_bar_graph()
         return [dcc.Graph(figure=fig)]
 
+#Display additional scatter plot
 @app.callback(
     Output(component_id='container', component_property='children'),
     [Input(component_id='add-chart', component_property='n_clicks')],
@@ -194,7 +203,7 @@ def display_graphs(n_clicks, div_children):
     div_children.append(new_child)
     return div_children
 
-
+#Update scatter plot through dropdown
 @app.callback(
     Output(component_id={'type': 'scatter-plot-add', 'index': MATCH},  component_property='figure'),
     Input(component_id={'type': 'scatter-dropdown', 'index': MATCH}, component_property='value')
