@@ -3,9 +3,8 @@ import pandas as pd
 from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
 import plotly.express as px
-from dash.dependencies import Input, Output, ALL, State, MATCH, ALLSMALLER
+from dash.dependencies import Input, Output, State, MATCH
 import dash_daq as daq
-
 
 # ------------------------#
 # Create Graphs
@@ -14,26 +13,33 @@ import dash_daq as daq
 BIKE_DATA_FILEPATH = Path(__file__).parent.joinpath('data', 'Bike_data_adjusted.csv')
 df_bike = pd.read_csv(BIKE_DATA_FILEPATH, encoding='unicode_escape')
 
-# Bar graph for Month vs Bicycle Rented
-month_bar_graph = px.bar(
-    data_frame=df_bike.groupby('Month').mean('Count').reset_index(),
-    x='Month',
-    y="Count",
-    labels={'Month': 'Month', 'Count': 'Average Bike Rented'},
-    template="simple_white"
-)
+# Convert 'Count' to integer
+df_bike['Count'] = df_bike['Count'].astype(int)
 
 # Line plot for Hour VS Bicycle Rented
 hour_line_plot1 = px.line(
-    data_frame=df_bike.groupby(['DayofWeek','Hour']).mean('Count').reset_index(),
+    data_frame=df_bike.groupby(['DayofWeek', 'Hour']).mean('Count').reset_index(),
     x='Hour',
     y='Count',
+    category_orders={'DayofWeek': ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thurday',
+                     'Friday', 'Saturday']},
     color='DayofWeek',
-    markers=True,
     labels={'Hour': 'Time', 'Count': 'Average Bike Rented'},
+    markers=True,
     template="simple_white"
 )
 
+# Bar graph for Month vs Bicycle Rented
+bar_orginal_df = df_bike.groupby(['Month']).mean('Count').reset_index()
+def month_bar_graph(df=bar_orginal_df, fill=None):
+    fig = px.bar(
+        data_frame=df,
+        x='Month',
+        y="Count",
+        color=fill,
+        labels={'Month': 'Month', 'Count': 'Average Bike Rented'},
+        template="simple_white")
+    return fig
 
 # Make Scatter Plot with Y-VAR as total number of bike rented
 def scatter_plot(x_var):
@@ -46,8 +52,9 @@ def scatter_plot(x_var):
         opacity=0.3,
         labels={'x': x_var, 'Count': 'Bike Rented'},
         template="simple_white"
-)
+    )
     return fig
+
 
 # ------------------------#
 # Create App
@@ -58,7 +65,7 @@ app = Dash(external_stylesheets=[dbc.themes.LUX],
                {"name": "viewport", "content": "width=device-width, initial-scale=1"}
            ],
            suppress_callback_exceptions=True
-)
+           )
 
 # Create navigation bar
 navbar = dbc.NavbarSimple(
@@ -101,6 +108,7 @@ app.layout = dbc.Container(
     fluid=True
 )
 
+
 # Callback for Tab
 @app.callback(Output(component_id='tabs-content-graph', component_property='children'),
               Input(component_id='nav-tabs', component_property='value'))
@@ -113,11 +121,19 @@ def render_content(tab):
                 dcc.Graph(id='hour_line', figure=hour_line_plot1.update_traces(
                     selector=lambda t: t.name != 'Monday', visible='legendonly'))
             ]),
-            dbc.Row([
+            dbc.Row((
                 html.Br(),
                 html.H4('Average Bike rented each Month'),
-                dcc.Graph(id='month_bar', figure=month_bar_graph)
-            ])
+                #dcc.Graph(id='month_bar', figure=month_bar_graph),
+                daq.BooleanSwitch(
+                    id='boolean-switch',
+                    on=False,
+                    color='#78c2ad',
+                    label="Show Holiday"
+                ),
+                html.Div(
+                    [dcc.Graph(id='bar')], id='boolean-switch-output')
+            ))
         ]),
     elif tab == 'others':
         return html.Div([
@@ -132,46 +148,67 @@ def render_content(tab):
         ])
 
 @app.callback(
-    Output('container', 'children'),
-    [Input('add-chart', 'n_clicks')],
-    [State('container', 'children')]
+    Output(component_id='boolean-switch-output', component_property='children'),
+    Input(component_id='boolean-switch', component_property='on')
+)
+def update_output(on):
+    if on:
+        bar_new_df = df_bike.groupby(['Month', 'Holiday']).mean('Count').reset_index()
+        fig = month_bar_graph(bar_new_df, 'Holiday')
+        dcc.Graph(figure=fig)
+        return [dcc.Graph(figure=fig)]
+    else:
+        fig = month_bar_graph()
+        return [dcc.Graph(figure=fig)]
+
+@app.callback(
+    Output(component_id='container', component_property='children'),
+    [Input(component_id='add-chart', component_property='n_clicks')],
+    [State(component_id='container', component_property='children')]
 )
 def display_graphs(n_clicks, div_children):
     new_child = html.Div(
-        style={'width': '75%', 'display': 'inline-block', 'outline': 'thin lightgrey solid', 'padding': 10},
+        style={'width': '75%', 'display': 'inline-block',
+               'outline': 'thin lightgrey solid', 'padding': 10},
         children=[
             dcc.Graph(
                 id={
-                    'type': 'dynamic-graph',
+                    'type': 'scatter-plot-add',
                     'index': n_clicks
                 },
                 figure={}
             ),
-                     dcc.Dropdown(id={'type': 'scatter-dropdown',
-                                      'index': n_clicks},
-                                  options=[
-                                      {'label': 'Humidity', 'value': 'Humidity'},
-                                      {'label': 'Wind Speed', 'value': 'Windspeed'},
-                                      {'label': 'Solar Radiation', 'value': 'Solar_Rad'},
-                                      {'label': 'Snow', 'value': 'Snowfall'},
-                                      {'label': 'Rain', 'value': 'Rainfall'},
-                                  ],
-                                  placeholder='Please select ...')
-                     ])
+            dcc.Dropdown(id={'type': 'scatter-dropdown',
+                             'index': n_clicks},
+                         options=[
+                             {'label': 'Humidity', 'value': 'Humidity'},
+                             {'label': 'Wind Speed', 'value': 'Windspeed'},
+                             {'label': 'Solar Radiation', 'value': 'Solar_Rad'},
+                             {'label': 'Snow', 'value': 'Snowfall'},
+                             {'label': 'Rain', 'value': 'Rainfall'},
+                         ],
+                         value=None,
+                         placeholder='Please select ...',
+                         )
+        ])
     div_children.append(new_child)
     return div_children
 
+
 @app.callback(
-    Output({'type': 'dynamic-graph', 'index': MATCH}, 'figure'),
+    Output(component_id={'type': 'scatter-plot-add', 'index': MATCH},  component_property='figure'),
     Input(component_id={'type': 'scatter-dropdown', 'index': MATCH}, component_property='value')
 )
 def update_scatter_plot(x_variable):
-    fig_new = scatter_plot(x_variable)
-    fig_new.update_layout(title_text=str(x_variable) + ' VS Number of Bike Rented',
-                      title_x=0.5)
-    return fig_new
+    # if not selected return blank graph
+    if x_variable is None:
+        return {'data': []}
+    else:
+        fig_new = scatter_plot(x_variable)
+        fig_new.update_layout(title_text=str(x_variable) + ' VS Number of Bike Rented',
+                          title_x=0.5)
+        return fig_new
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
-
-
