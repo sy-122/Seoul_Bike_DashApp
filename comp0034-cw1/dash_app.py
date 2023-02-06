@@ -21,12 +21,12 @@ hour_line_plot1 = px.line(
     data_frame=df_bike.groupby(['DayofWeek', 'Hour']).mean('Count').reset_index(),
     x='Hour',
     y='Count',
-    category_orders={'DayofWeek': ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thurday',
-                     'Friday', 'Saturday']},
+    category_orders={'DayofWeek': ['Sunday', 'Monday', 'Tuesday',
+                                   'Wednesday', 'Thurday', 'Friday', 'Saturday']},
     color='DayofWeek',
     labels={'Hour': 'Time', 'Count': 'Average Bike Rented'},
     markers=True,
-    template="simple_white"
+    template='simple_white'
 )
 
 # Dataframe needed for the bar graph
@@ -45,7 +45,7 @@ def month_bar_graph(df=bar_original_df, bar_text=None):
         x='Month',
         y="Count",
         text=bar_text,
-        labels={'Month': 'Month', 'Count': 'Average Bike Rented'},
+        labels={'Month': 'Month', 'Count': 'Average Bike Rented per hour'},
         template="simple_white")
     return fig
 

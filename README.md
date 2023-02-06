@@ -1,30 +1,30 @@
-# COMP0034 Coursework 1 template repository
+# COMP0034 Coursework 1  
+This is Soyeong Bak's 2022/2023 COMP0034 Coursework 1.
 
-To set up your project:
-
-1. Clone this repository in your IDE (e.g. PyCharm, Visual Studio Code) from GitHub. Follow the help in your IDE
-   e.g. [clone a GitHub repo in PyCharm.](https://www.jetbrains.com/help/pycharm/manage-projects-hosted-on-github.html#clone-from-GitHub)
-2. Create and then activate a virtual environment (venv). Use the instructions for your IDE
-   or [navigate to your project directory and use python.](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/)
-3. Install the requirements from requirements.txt. Use the instructions for your IDE
-   or [the pip documentation](https://pip.pypa.io/en/latest/user_guide/#requirements-files).
-4. Edit .gitignore to add any config files and folders for your IDE. 
-
+(Student id: 19101957)
 
 # Set-up instructions
 
-Add any instructions here for the markers on how to setup and run your Dash app.
-
-Add the URL to your GitHub repo here e.g. https://github.com/ucl-comp0035name_of_your_repo
+1. You can clone the repository or access it through: https://github.com/sy-122/comp0034-cw1-i-sy-122.git
+2. You need an active virtual environment. 
+3. Install the requirements from requirements.txt.
 
 # Visualisation design
 
-Add evidence here.
+Explaination of visualization : [Visualization Design.pdf](Visualization Design.pdf)
 
 # Dash app
 
-Add any notes here (optional).
+The app is for two different group of users (explained in the 'Visualisation design').
+It is made so it's not too complicated for the wide audience to use, but to be engaging 
 
-# Testing
+Although it was planed to make multiple pages, to focus more on graph/visualization and
+overall interaction of the webpage, it is currently a single webpage. 
+Hence, although there is a navigation bar with two different pages those pages are
+currently not active but will be in the future. 
 
-Add evidence here (groups).
+The dash app has two tabs that divide the visualizations as the first one uses time related variables and the 
+second tab uses other variables, which are related to the weather. There are different functions
+in the app that allows uses to take more control of the dash app making it more interactive.
+
+*it can take time for the visualization to load so please be patient*
