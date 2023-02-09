@@ -16,7 +16,7 @@ df_bike = pd.read_csv(BIKE_DATA_FILEPATH, encoding='unicode_escape')
 # Convert 'Count' to integer
 df_bike['Count'] = df_bike['Count'].astype(int)
 
-# Dataframe for percent of holiday in each month (for bar graph)
+# Dataframe with percent of holiday in each month for bar graph
 bar_original_df = df_bike.groupby(['Month']).mean('Count').reset_index()
 Month_Holiday = df_bike.groupby(['Month'])['Holiday'].\
     value_counts(normalize=True).reset_index(name='Holiday%')
@@ -219,7 +219,7 @@ def update_scatter_plot(x_variable):
     else:
         fig_new = scatter_plot(x_variable)
         fig_new.update_layout(title_text=str(x_variable) + ' VS Number of Bike Rented',
-                          title_x=0.5)
+                              title_x=0.5)
         return fig_new
 
 
