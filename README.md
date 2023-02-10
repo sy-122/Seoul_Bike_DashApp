@@ -13,6 +13,7 @@ https://github.com/sy-122/comp0034-cw1-i-sy-122.git
 2. Then you need an active virtual environment.
 3. Install the requirements from [requirements.txt](requirements.txt)
 4. Run the [dash_app.py](seoulbike_app/dash_app.py)
+   (Every files needed for the app is in the seoulbike_app file)
 
 # Visualisation design
 
