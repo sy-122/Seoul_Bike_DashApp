@@ -1,7 +1,5 @@
 # COMP0034 Coursework 1  
-This is Soyeong Bak's 2022/2023 COMP0034 Coursework 1.
 
-(Student id: 19101957)
 
 # Set-up instructions
 
