@@ -7,7 +7,7 @@ from seoulbike_app import create_charts as cc
 
 dash.register_page(__name__, path='/')
 
-# Create the app layout using Bootstrap fluid container
+# Create Home page layout using Bootstrap fluid container
 layout = dbc.Container(
     children=[
         html.H1(children='Welcome to Seoul Public Bicycle Website!',
@@ -28,7 +28,7 @@ layout = dbc.Container(
 )
 
 
-# Callback for Tab
+# Callback for Tab that divides the graphs section
 @callback(Output(component_id='tabs-content-graph', component_property='children'),
           Input(component_id='nav-tabs', component_property='value'))
 def render_content(tab):
@@ -82,7 +82,7 @@ def update_output(on):
         return [dcc.Graph(figure=fig)]
 
 
-# Display additional scatter plot
+# Add additional Scatter Plot display
 @callback(
     Output(component_id='container', component_property='children'),
     [Input(component_id='add-chart', component_property='n_clicks')],
@@ -117,7 +117,7 @@ def display_graphs(n_clicks, div_children):
     return div_children
 
 
-# Update scatter plot through dropdown
+# Update Scatter Plot through selecting value in dropdown
 @callback(
     Output(component_id={'type': 'scatter-plot-add', 'index': MATCH}, component_property='figure'),
     Input(component_id={'type': 'scatter-dropdown', 'index': MATCH}, component_property='value')
