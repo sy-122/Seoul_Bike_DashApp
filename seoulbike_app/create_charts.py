@@ -9,7 +9,7 @@ df_bike = pd.read_csv(BIKE_DATA_FILEPATH, encoding='unicode_escape')
 # Convert 'Count' to integer
 df_bike['Count'] = df_bike['Count'].astype(int)
 
-# Dataframe with percent of holiday in each month for bar graph
+# Create dataframe with percent of holiday in each month for bar graph
 bar_original_df = df_bike.groupby(['Month']).mean('Count').reset_index()
 Month_Holiday = df_bike.groupby(['Month'])['Holiday']. \
     value_counts(normalize=True).reset_index(name='Holiday%')
@@ -24,9 +24,9 @@ hour_line_plot = px.line(
     data_frame=df_bike.groupby(['DayofWeek', 'Hour']).mean('Count').reset_index(),
     x='Hour',
     y='Count',
-    category_orders={'DayofWeek': ['Sunday', 'Monday', 'Tuesday',
-                                   'Wednesday', 'Thurday', 'Friday',
-                                   'Saturday']},
+    category_orders={'Day of Week': ['Sunday', 'Monday', 'Tuesday',
+                                     'Wednesday', 'Thursday', 'Friday',
+                                     'Saturday']},
     color='DayofWeek',
     labels={'Hour': 'Time', 'Count': 'Average Bike Rented'},
     markers=True,
@@ -34,8 +34,15 @@ hour_line_plot = px.line(
 )
 
 
-# Make bar graph for Month vs Bicycle Rented
+# Make Bar Chart for Month vs Bicycle Rented
 def month_bar_graph(df=bar_original_df, bar_text=None):
+    """
+    Creates Bar Graph showing change in the average bike rented per hour for each month
+
+    :df: dataframe to be used, default is 'bar_orginal_df'
+    :bar_text: label on bar, default is 'none'
+    :return: Plotly Express Bar Chart
+    """
     fig = px.bar(
         data_frame=df,
         x='Month',
@@ -50,6 +57,12 @@ def month_bar_graph(df=bar_original_df, bar_text=None):
 
 # Make Scatter Plot with different x-variables
 def scatter_plot(x_var):
+    """
+    Creates Scatter Plot showing with different x-variables to the number of bike rented per hour
+
+    :x_var: x-variables selected from the dropdown
+    :return: Plotly Express Scatter Plot
+    """
     fig = px.scatter(
         data_frame=df_bike,
         x=x_var,
