@@ -39,8 +39,8 @@ def month_bar_graph(df=bar_original_df, bar_text=None):
     """
     Creates Bar Graph showing change in the average bike rented per hour for each month
 
-    :df: dataframe to be used, default is 'bar_orginal_df'
-    :bar_text: label on bar, default is 'none'
+    :df: dataframe 'bar_new_df' or default 'bar_orginal_df'
+    :bar_text: str 'Holiday%' or default 'None'
     :return: Plotly Express Bar Chart
     """
     fig = px.bar(
@@ -60,7 +60,7 @@ def scatter_plot(x_var):
     """
     Creates Scatter Plot showing with different x-variables to the number of bike rented per hour
 
-    :x_var: x-variables selected from the dropdown
+    :x_var: str x-variables selected from scatter plot dropdown
     :return: Plotly Express Scatter Plot
     """
     fig = px.scatter(
